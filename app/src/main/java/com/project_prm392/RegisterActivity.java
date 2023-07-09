@@ -8,6 +8,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.project_prm392.Entity.User;
+import com.project_prm392.RoomDB.RoomDB;
+import com.project_prm392.RoomDB.UserDAO;
+
 public class RegisterActivity extends AppCompatActivity {
 
     private EditText usernameEditText, passwordEditText, retypePasswordEditText, emailEditText, phoneEditText;
@@ -37,11 +41,14 @@ public class RegisterActivity extends AppCompatActivity {
             } else if (!password.equals(retypePassword)) {
                 Toast.makeText(RegisterActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
             } else {
-                // TODO: Perform registration logic here
-
-                // Example registration logic
-                Toast.makeText(RegisterActivity.this, "Registration successful", Toast.LENGTH_SHORT).show();
-                finish(); // Finish the activity and return to the previous screen
+                RoomDB db = RoomDB.getInstance(getApplicationContext());
+                UserDAO userDAO = db.userDAO();
+                new Thread(() -> {
+                    User u = new User(username, password, email, phone, 2);
+                    userDAO.insertUser(u);
+                    finish();
+                }).start();
+                Toast.makeText(getApplicationContext(),"Register successfully.",Toast.LENGTH_SHORT).show();
             }
         });
 

@@ -1,12 +1,25 @@
 package com.project_prm392;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.project_prm392.Entity.User;
+import com.project_prm392.RoomDB.RoomDB;
+import com.project_prm392.RoomDB.UserDAO;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ForgotPasswordActivity extends AppCompatActivity {
 
@@ -23,21 +36,25 @@ public class ForgotPasswordActivity extends AppCompatActivity {
 
         resetButton.setOnClickListener(v -> {
             String email = emailEditText.getText().toString();
-
-            // TODO: Implement your logic to send a new password to the provided email
-
-            // Example implementation
-            if (isValidEmail(email)) {
-                // Generate a new password
-                String newPassword = generateNewPassword();
-
-                // Send the new password to the email address
-                sendPasswordToEmail(email, newPassword);
-
-                Toast.makeText(ForgotPasswordActivity.this, "A new password has been sent to your email", Toast.LENGTH_SHORT).show();
-                finish(); // Finish the activity and go back to the login screen
-            } else {
-                Toast.makeText(ForgotPasswordActivity.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+            try {
+                if (isValidEmail(email)) {
+                    // Generate a new password
+                    String newPassword = generateNewPassword();
+                    RoomDB db = RoomDB.getInstance(getApplicationContext());
+                    UserDAO userDAO = db.userDAO();
+                    new Thread(() -> {
+                        User u = userDAO.getUserByEmail(email);
+                        if (u != null) {
+                            u.setPassword(newPassword);
+                            userDAO.updateUser(u);
+                        }
+                    }).start();
+                    sendPasswordToEmail(email, newPassword);
+                } else {
+                    Toast.makeText(ForgotPasswordActivity.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         });
 
@@ -46,14 +63,25 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         });
     }
 
-    private boolean isValidEmail(CharSequence target) {
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
+    private boolean isValidEmail(CharSequence target) throws InterruptedException {
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches()) {
+            return false;
+        }
+        RoomDB db = RoomDB.getInstance(getApplicationContext());
+        UserDAO userDAO = db.userDAO();
+        AtomicBoolean check = new AtomicBoolean(false);
+        Thread t = new Thread(() -> {
+            User u = userDAO.getUserByEmail(target.toString());
+            if (u != null) {
+                check.set(true);
+            }
+        });
+        t.start();
+        t.join();
+        return check.get();
     }
 
     private String generateNewPassword() {
-        // TODO: Implement your logic to generate a new password (e.g., random password generation)
-
-        // Example implementation: Generate a random 8-character password
         String allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder sb = new StringBuilder(8);
         for (int i = 0; i < 8; i++) {
@@ -64,6 +92,27 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     }
 
     private void sendPasswordToEmail(String email, String newPassword) {
-        // TODO: Implement your logic to send the new password to the provided email
+        JSONObject jsonObjectRequest = new JSONObject();
+        try {
+            jsonObjectRequest.put("toMail", email);
+            jsonObjectRequest.put("subject", "Recover password");
+            jsonObjectRequest.put("content", "New password for your account is " + newPassword);
+            JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
+                    "https://263a-2405-4803-fad0-a600-edc0-231a-7819-19d5.ngrok-free.app/api/send", jsonObjectRequest, response -> {
+                Toast.makeText(ForgotPasswordActivity.this, "A new password has been sent to your email.", Toast.LENGTH_SHORT).show();
+                finish();
+            }, error -> Toast.makeText(ForgotPasswordActivity.this, "Server is error right now, please try again.", Toast.LENGTH_SHORT).show()) {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<String, String>();
+                    headers.put("Content-Type", "application/json; charset=utf-8");
+                    headers.put("User-Agent", "localtunnel");
+                    return headers;
+                }
+            };
+            VolleySingleton.getmInstance(getApplicationContext()).addToRequestQueue(jsonObjReq);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

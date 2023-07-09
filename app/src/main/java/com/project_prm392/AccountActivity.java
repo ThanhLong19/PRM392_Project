@@ -39,11 +39,11 @@ public class AccountActivity extends AppCompatActivity {
         }).start();
 
         updateButton.setOnClickListener(v -> {
-            startActivity(new Intent(AccountActivity.this, UpdateProfileActivity.class));
+//            startActivity(new Intent(AccountActivity.this, UpdateProfileActivity.class));
         });
 
         changePasswordButton.setOnClickListener(v -> {
-            startActivity(new Intent(this, ChangePasswordActivity.class));
+//            startActivity(new Intent(this, ChangePasswordActivity.class));
         });
     }
 }

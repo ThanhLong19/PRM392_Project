@@ -3,6 +3,7 @@ package com.project_prm392.RoomDB;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
 
@@ -18,7 +19,7 @@ public interface UserDAO {
     @Query("SELECT * FROM User WHERE userId = :id")
     User getUserById(int id);
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.ROLLBACK)
     void insertUser(User user);
 
     @Delete
@@ -29,4 +30,7 @@ public interface UserDAO {
 
     @Query("SELECT * FROM User WHERE userName = :username and password = :password")
     User getAccountByUsernameAndPassword(String username, String password);
+
+    @Query("SELECT * FROM User WHERE email = :email")
+    User getUserByEmail(String email);
 }
