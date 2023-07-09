@@ -11,4 +11,6 @@
     <string name="back">\u003C Back</string>
     <string name="forgot_password_title">Forgot Password</string>
     <string name="reset_password">Reset Password</string>
+    <string name="update_profile">Update Profile</string>
+    <string name="change_password">Change Password</string>
 </resources>

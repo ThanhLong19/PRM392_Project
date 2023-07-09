@@ -32,8 +32,6 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setOnClickListener(v -> {
             String username = usernameEditText.getText().toString();
             String password = passwordEditText.getText().toString();
-            // TODO: Add your login logic here
-
             if (username.isEmpty()) {
                 usernameEditText.setError("Username cannot be empty");
             } else if (password.isEmpty()) {
@@ -49,6 +47,7 @@ public class LoginActivity extends AppCompatActivity {
                         SessionManager sessionManager = new SessionManager(getApplicationContext());
                         sessionManager.setLoggedIn(true);
                         Intent i = new Intent(LoginActivity.this, HomeActivity.class);
+                        i.putExtra("userID", u.getUserId());
                         startActivity(i);
                     }
                 }).start();
