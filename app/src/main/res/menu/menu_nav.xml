@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+
+        <item android:id="@+id/nav_home"
+            android:title="Home"
+            android:icon="@drawable/ic__home"/>
+        <item android:id="@+id/nav_fav"
+            android:title="Favourite food"
+            android:icon="@drawable/ic_baseline_favorite_24"/>
+        <item android:id="@+id/nav_history"
+            android:title="History"
+            android:icon="@drawable/ic_baseline_history_24"/>
+        <item android:id="@+id/nav_changePw"
+            android:title="Change password"
+            android:icon="@drawable/ic_baseline_lock_24"/>
+        <item android:id="@+id/nav_profile"
+            android:title="Profile"
+            android:icon="@drawable/ic_baseline_person_24"/>
+    </group>
+
+
+</menu>

@@ -1,6 +1,7 @@
-package com.project_prm392;
+package com.project_prm392.Activity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -8,31 +9,33 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.project_prm392.Entity.User;
-import com.project_prm392.RoomDB.RoomDB;
-import com.project_prm392.RoomDB.UserDAO;
+import com.project_prm392.DatabaseHelper;
+import com.project_prm392.R;
+import com.project_prm392.VolleySingleton;
+import com.project_prm392.entity.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ForgotPasswordActivity extends AppCompatActivity {
 
     private EditText emailEditText;
+    DatabaseHelper db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_forgot_password);
+        setContentView(R.layout.activity_forgot_pw);
 
-        emailEditText = findViewById(R.id.emailEditText);
-        Button resetButton = findViewById(R.id.resetButton);
-        Button backButton = findViewById(R.id.backButton);
+        emailEditText = findViewById(R.id.email);
+        Button resetButton = findViewById(R.id.send);
+        db = new DatabaseHelper(getApplicationContext());
 
         resetButton.setOnClickListener(v -> {
             String email = emailEditText.getText().toString();
@@ -40,15 +43,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 if (isValidEmail(email)) {
                     // Generate a new password
                     String newPassword = generateNewPassword();
-                    RoomDB db = RoomDB.getInstance(getApplicationContext());
-                    UserDAO userDAO = db.userDAO();
-                    new Thread(() -> {
-                        User u = userDAO.getUserByEmail(email);
-                        if (u != null) {
-                            u.setPassword(newPassword);
-                            userDAO.updateUser(u);
-                        }
-                    }).start();
+                    User u = db.getUserByEmail(email);
+                    db.changePw(newPassword, u.getId());
                     sendPasswordToEmail(email, newPassword);
                 } else {
                     Toast.makeText(ForgotPasswordActivity.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
@@ -57,28 +53,14 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         });
-
-        backButton.setOnClickListener(v -> {
-            onBackPressed();
-        });
     }
 
     private boolean isValidEmail(CharSequence target) throws InterruptedException {
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches()) {
             return false;
         }
-        RoomDB db = RoomDB.getInstance(getApplicationContext());
-        UserDAO userDAO = db.userDAO();
-        AtomicBoolean check = new AtomicBoolean(false);
-        Thread t = new Thread(() -> {
-            User u = userDAO.getUserByEmail(target.toString());
-            if (u != null) {
-                check.set(true);
-            }
-        });
-        t.start();
-        t.join();
-        return check.get();
+        User u = db.getUserByEmail(target.toString());
+        return u != null;
     }
 
     private String generateNewPassword() {
@@ -98,18 +80,23 @@ public class ForgotPasswordActivity extends AppCompatActivity {
             jsonObjectRequest.put("subject", "Recover password");
             jsonObjectRequest.put("content", "New password for your account is " + newPassword);
             JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
-                    "https://263a-2405-4803-fad0-a600-edc0-231a-7819-19d5.ngrok-free.app/api/send", jsonObjectRequest, response -> {
+                    "https://aa25fb0d1f24-8068224068665278382.ngrok-free.app/api/send", jsonObjectRequest, response -> {
                 Toast.makeText(ForgotPasswordActivity.this, "A new password has been sent to your email.", Toast.LENGTH_SHORT).show();
                 finish();
-            }, error -> Toast.makeText(ForgotPasswordActivity.this, "Server is error right now, please try again.", Toast.LENGTH_SHORT).show()) {
+            }, error -> {
+                String er = error.networkResponse.statusCode + ": " + new String(error.networkResponse.data);
+                Log.e("Volley Error: ", er);
+                Toast.makeText(ForgotPasswordActivity.this, "Server is error right now, please try again.", Toast.LENGTH_SHORT).show();
+            }) {
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
                     HashMap<String, String> headers = new HashMap<String, String>();
                     headers.put("Content-Type", "application/json; charset=utf-8");
-                    headers.put("User-Agent", "localtunnel");
+                    headers.put("ngrok-skip-browser-warning", "true");
                     return headers;
                 }
             };
+            jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(0, DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
             VolleySingleton.getmInstance(getApplicationContext()).addToRequestQueue(jsonObjReq);
         } catch (JSONException e) {
             e.printStackTrace();

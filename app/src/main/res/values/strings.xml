@@ -1,16 +1,7 @@
 <resources>
-    <string name="app_name">Project_PRM392</string>
-    <string name="username">Username</string>
-    <string name="password">Password</string>
-    <string name="login">Login</string>
-    <string name="forgot_password">Forgot Password?</string>
-    <string name="register">Register</string>
-    <string name="retype_password">Retype Password</string>
-    <string name="email">Email</string>
-    <string name="phone_number">Phone Number</string>
-    <string name="back">\u003C Back</string>
-    <string name="forgot_password_title">Forgot Password</string>
-    <string name="reset_password">Reset Password</string>
-    <string name="update_profile">Update Profile</string>
-    <string name="change_password">Change Password</string>
+    <string name="app_name">My Application</string>
+    <string name="navigation_drawer_open">Open</string>
+    <string name="navigation_drawer_close">Close</string>
+
+
 </resources>
